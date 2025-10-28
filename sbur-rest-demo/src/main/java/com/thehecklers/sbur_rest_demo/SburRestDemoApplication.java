@@ -2,19 +2,22 @@ package com.thehecklers.sbur_rest_demo;
 
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
+import org.springframework.http.*;
+import org.springframework.web.bind.annotation.*;
+
+import java.util.*;
 
 @SpringBootApplication
 public class SburRestDemoApplication {
-
-	public static void main(String[] args) {
-		SpringApplication.run(SburRestDemoApplication.class, args);
-	}
-
+    public static void main(String[] args) {
+        SpringApplication.run(SburRestDemoApplication.class, args);
+    }
 }
 
 @RestController
 class RestApiDemoController {
-    private List<Coffe> coffess = new ArrayList<>;
+    private final List<Coffee> coffees = new ArrayList<>();
+
     public RestApiDemoController() {
         coffees.addAll(List.of(
                 new Coffee("Café Cereza"),
@@ -24,14 +27,14 @@ class RestApiDemoController {
         ));
     }
 
-    @RequstMapping(value = "/coffess", method = RequestMethod.GET)
+    @GetMapping("/coffees")
     Iterable<Coffee> getCoffees() {
-        return coffess;
+        return coffees;
     }
 
     @GetMapping("/coffees/{id}")
     Optional<Coffee> getCoffeeById(@PathVariable String id) {
-        for (Coffee c: coffees) {
+        for (Coffee c : coffees) {
             if (c.getId().equals(id)) {
                 return Optional.of(c);
             }
@@ -44,33 +47,44 @@ class RestApiDemoController {
         coffees.add(coffee);
         return coffee;
     }
+
     @PutMapping("/coffees/{id}")
-    Coffee putCoffee(@PathVariable String id, @RequestBody Coffee coffee) {
+    ResponseEntity<Coffee> putCoffee(@PathVariable String id, @RequestBody Coffee coffee) {
         int coffeeIndex = -1;
-        for (Coffee c: coffees) {
+        for (Coffee c : coffees) {
             if (c.getId().equals(id)) {
                 coffeeIndex = coffees.indexOf(c);
                 coffees.set(coffeeIndex, coffee);
+                break;
             }
         }
-        return (coffeeIndex == -1) ? postCoffee(coffee) : coffee;
+
+        return (coffeeIndex == -1)
+                ? new ResponseEntity<>(postCoffee(coffee), HttpStatus.CREATED)
+                : new ResponseEntity<>(coffee, HttpStatus.OK);
     }
+
     @DeleteMapping("/coffees/{id}")
     void deleteCoffee(@PathVariable String id) {
         coffees.removeIf(c -> c.getId().equals(id));
     }
-    
 }
-class Coffe {
+
+class Coffee {
     private final String id;
     private String name;
 
-    public Coffe(String id, String name) {
+    public Coffee(String id, String name) {
         this.id = id;
         this.name = name;
     }
-    public Coffe(String name) {
+
+    public Coffee(String name) {
         this(UUID.randomUUID().toString(), name);
+    }
+
+    public Coffee() {
+        this.id = UUID.randomUUID().toString();
     }
 
     public String getId() {
